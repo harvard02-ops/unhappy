@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2025勇闖台中哇尚勇 — 後台管理</title>
+<style>
+  body{font-family:"Noto Sans TC",system-ui,Arial;margin:0;background:#f7f9fc;color:#333;}
+  .container{max-width:900px;margin:24px auto;padding:18px;}
+  header{display:flex;align-items:center;justify-content:space-between;}
+  h1{font-size:20px;margin:0;color:#ff6f61;}
+  table{width:100%;border-collapse:collapse;margin-top:18px;}
+  th,td{padding:8px 12px;border:1px solid #e0e0e0;text-align:center;}
+  th{background-color:#f5f5f5;}
+  .btn{padding:6px 12px;background-color:#4CAF50;color:white;border:none;border-radius:4px;cursor:pointer;}
+  .btn:hover{background-color:#45a049;}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>🏆 2025勇闖台中哇尚勇 — 後台管理</h1>
+  <button id="save-btn" class="btn">💾 儲存至雲端</button>
+</header>
+
+<table id="score-table">
+<thead><tr><th>組別名稱</th><th>分數</th></tr></thead>
+<tbody>
+<tr><td><input type="text" value="A組"/></td><td><input type="number" value="100"/></td></tr>
+<tr><td><input type="text" value="B組"/></td><td><input type="number" value="90"/></td></tr>
+<tr><td><input type="text" value="C組"/></td><td><input type="number" value="80"/></td></tr>
+</tbody>
+</table>
+
+<div id="status">狀態：未儲存</div>
+</div>
+
+<script>
+const API_BASE_URL="https://script.google.com/macros/s/AKfycbwdy-kjizXyC4PXB9gEwQQ6k-kQU8afLFL9HvbA_FTHQAA-YxYrej8X55KYmq_rc_kn/exec";
+const saveBtn=document.getElementById('save-btn');
+const statusEl=document.getElementById('status');
+
+saveBtn.addEventListener('click',async ()=>{
+  const rows=Array.from(document.querySelectorAll('#score-table tbody tr'));
+  const data=rows.map(r=>({
+    group_name:r.cells[0].querySelector('input').value,
+    score:r.cells[1].querySelector('input').value
+  }));
+  const pwd=prompt("請輸入老師密碼：");
+  if(pwd!=="0857"){alert("密碼錯誤！");return;}
+
+  try{
+    const resp=await fetch(API_BASE_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:pwd,data})
+    });
+    const result=await resp.json();
+    if(result.ok){statusEl.textContent="狀態：更新成功！";}
+    else{statusEl.textContent="狀態：更新失敗！";}
+  }catch(err){
+    statusEl.textContent="狀態：更新失敗！錯誤："+err.message;
+  }
+});
+</script>
+</body>
+</html>
