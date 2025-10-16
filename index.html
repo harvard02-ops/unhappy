@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2025勇闖台中哇尚勇 — 排行榜</title>
+<style>
+  body{font-family:"Noto Sans TC",system-ui,Arial;margin:0;background:linear-gradient(135deg,#ffefe6 0%,#e6f7ff 100%);color:#222;}
+  .container{max-width:900px;margin:24px auto;padding:18px;}
+  header{display:flex;align-items:center;justify-content:space-between;}
+  h1{font-size:20px;margin:0;color:#ff6f61;}
+  #cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:18px;}
+  .card{background:#f5f8ff;border-radius:12px;padding:12px;box-shadow:0 6px 14px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:flex-start;}
+  .rank{font-weight:800;font-size:20px;margin-bottom:6px;}
+  .group{font-size:18px;font-weight:700;}
+  .score{margin-top:6px;font-size:16px;color:#333;}
+  .gold{background:linear-gradient(90deg,#fff7e6,#fff0b8);border:2px solid #ffd700;}
+  .silver{background:linear-gradient(90deg,#f7f9fb,#eef4fb);border:2px solid #c0c0c0;}
+  .bronze{background:linear-gradient(90deg,#fff5f0,#ffd8c7);border:2px solid #cd7f32;}
+  .normal{background:linear-gradient(90deg,#f3f7fb,#edf6ff);border:1px solid rgba(0,0,0,0.04);}
+  footer{margin-top:22px;text-align:center;padding-top:12px;border-top:1px dashed rgba(0,0,0,0.06);}
+  .teacher-photo{max-width:160px;border-radius:10px;margin:12px auto 0;display:block;}
+  .last-updated{font-size:12px;color:#666;margin-top:8px;}
+  .loading{opacity:0.6}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>🏆 2025勇闖台中哇尚勇 — 排行榜</h1>
+  <div id="refresh-wrapper">
+    <button id="refresh-btn">🔄 重新整理</button>
+    <button id="teacher-login-btn" style="margin-left:8px;">👩‍🏫 老師登入</button>
+  </div>
+</header>
+
+<div id="cards" aria-live="polite"></div>
+
+<footer>
+  <div class="last-updated" id="last-updated">-</div>
+  <img id="teacher-photo" class="teacher-photo" src="https://via.placeholder.com/300x200.png?text=%E8%80%81%E5%B8%AB%E7%85%A7%E7%89%87+%28%E5%81%A5%E8%A8%98%29" alt="老師照片（預留）">
+</footer>
+</div>
+
+<script>
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbwdy-kjizXyC4PXB9gEwQQ6k-kQU8afLFL9HvbA_FTHQAA-YxYrej8X55KYmq_rc_kn/exec";
+const cardsEl = document.getElementById('cards');
+const lastUpdatedEl = document.getElementById('last-updated');
+const refreshBtn = document.getElementById('refresh-btn');
+
+const teacherPassword = "0857";
+const adminUrl = "admin.html";
+document.getElementById('teacher-login-btn').addEventListener('click', () => {
+  const pwd = prompt("請輸入老師密碼：");
+  if(pwd===teacherPassword){ alert("密碼正確，即將進入後台"); window.location.href=adminUrl;}
+  else alert("密碼錯誤！");
+});
+
+async function fetchScores(){
+  cardsEl.classList.add('loading');
+  try{
+    const resp = await fetch(API_BASE_URL+"?action=get");
+    const json = await resp.json();
+    if(!json.ok) throw new Error(json.error||'fetch error');
+    let data=json.data||[];
+    data.forEach(d=>{d.score=Number(d.score)||0; d.group_name=d.group_name||"未命名";});
+    data.sort((a,b)=>b.score-a.score);
+    renderCards(data);
+    lastUpdatedEl.textContent="最後更新："+new Date().toLocaleString();
+  }catch(err){
+    cardsEl.innerHTML="<div>讀取失敗，請稍後再試。錯誤："+err.message+"</div>";
+    lastUpdatedEl.textContent="-";
+  }finally{cardsEl.classList.remove('loading');}
+}
+
+function renderCards(data){
+  cardsEl.innerHTML="";
+  if(!data.length){cardsEl.innerHTML="<div>暫無排名資料</div>";return;}
+  data.forEach((d,idx)=>{
+    const rank=idx+1;
+    const card=document.createElement('div');
+    card.className='card '+(rank===1?'gold':rank===2?'silver':rank===3?'bronze':'normal');
+    const rEl=document.createElement('div'); rEl.className='rank'; rEl.textContent=`#${rank}`;
+    const gEl=document.createElement('div'); gEl.className='group'; gEl.textContent=d.group_name;
+    const sEl=document.createElement('div'); sEl.className='score'; sEl.textContent=`分數：${d.score}`;
+    card.appendChild(rEl); card.appendChild(gEl); card.appendChild(sEl);
+    cardsEl.appendChild(card);
+  });
+}
+
+refreshBtn.addEventListener('click',fetchScores);
+fetchScores();
+setInterval(fetchScores,20000);
+</script>
+</body>
+</html>
